@@ -16,6 +16,9 @@ export const useSocket = create<SocketStore>((set, get) => ({
   connect: () => {
     const socket = io(`${import.meta.env.VITE_WEBSOCKET_URL}`, {
       transports: ['websocket'],
+      query: {
+        clientId: get().getClientId(),
+      },
     });
     socket.on('connect', () => {
       set({ socket, isConnected: true });

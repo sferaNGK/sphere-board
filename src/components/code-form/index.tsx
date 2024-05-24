@@ -32,10 +32,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export const CodeForm = ({ error, setError }: CodeFormProps) => {
-  const [socket, getClientId] = useSocket((state) => [
-    state.socket,
-    state.getClientId,
-  ]);
+  const socket = useSocket((state) => state.socket);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,7 +45,6 @@ export const CodeForm = ({ error, setError }: CodeFormProps) => {
     (data: FormValues) => {
       socket?.emit('user:verifyCode', {
         code: data.code,
-        clientId: getClientId(),
       });
     },
     [socket],

@@ -27,6 +27,7 @@ export const CodeActivation = () => {
         return;
       }
 
+      location.reload();
       setClientId();
       setIsVerified();
       navigate('/game');
