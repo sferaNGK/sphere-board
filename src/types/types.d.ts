@@ -5,7 +5,7 @@ export interface Game {
   port?: number;
 }
 
-export interface JoinGameHandler {
+export interface ToggleGameHandler {
   isStarted: boolean;
   game: Game;
 }

@@ -7,6 +7,7 @@ interface CodeStore {
   setCode: (code: string) => void;
   checkCode: () => boolean;
   setIsVerified: () => void;
+  setIsVerifiedToFalse: () => void;
 }
 
 export const useCode = create<CodeStore>()(
@@ -17,6 +18,7 @@ export const useCode = create<CodeStore>()(
       setCode: (code: string) => set({ code: code }),
       checkCode: () => !!get().code,
       setIsVerified: () => set({ isVerified: true }),
+      setIsVerifiedToFalse: () => set({ isVerified: false }),
     }),
     {
       name: 'code-storage',
