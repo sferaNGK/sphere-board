@@ -6,32 +6,51 @@ import {
   CodeForm,
   Typography,
 } from '@/components';
-import { useCode, useSocket } from '@/stores';
+import { useCode, useGame, useSocket } from '@/stores';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VerifyCodeHandler } from '@/types';
 
 export const CodeActivation = () => {
-  const [socket, setClientId] = useSocket((state) => [
+  const [socket, setClientId, reconnect] = useSocket((state) => [
     state.socket,
     state.setClientId,
+    state.reconnect,
   ]);
   const setIsVerified = useCode((state) => state.setIsVerified);
+  const [setPersistedIsStarted, setPersistedGame] = useGame((state) => [
+    state.setIsStarted,
+    state.setPersistedGame,
+  ]);
   const [error, setError] = React.useState<string | undefined>();
   const navigate = useNavigate();
 
-  React.useEffect(() => {
-    socket?.on('user:verifyCode', ({ success, error }: VerifyCodeHandler) => {
-      if (!success) {
-        error && setError(error);
-        return;
-      }
+  // TODO: можно зарефакторить??
 
-      location.reload();
-      setClientId();
-      setIsVerified();
-      navigate('/game');
-    });
+  React.useEffect(() => {
+    socket?.on(
+      'user:verifyCode',
+      ({ success, error, game, isSessionStarted }: VerifyCodeHandler) => {
+        if (!success) {
+          error && setError(error);
+          return;
+        }
+
+        if (game) {
+          setPersistedGame(game);
+        }
+
+        if (isSessionStarted) {
+          setPersistedIsStarted(isSessionStarted);
+        }
+
+        navigate('/game');
+        setClientId();
+        setIsVerified();
+
+        reconnect();
+      },
+    );
 
     return () => {
       socket?.off('user:verifyCode');

@@ -14,10 +14,10 @@ import { constructGameUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 
 export const GameScreen = () => {
-  const [socket, getClientId] = useSocket((state) => [
+  const [socket, getClientId, reconnect] = useSocket((state) => [
     state.socket,
     state.getClientId,
-    state.setClientId,
+    state.reconnect,
   ]);
   const [isStarted, setIsStarted] = useState(false);
   const [persistedGame, setPersistedGame, isPersistStarted, setPersistStarted] =
@@ -42,6 +42,8 @@ export const GameScreen = () => {
       const clientId = getClientId();
       socket.emit('game:join', { clientId });
 
+      // TODO: получить teamName для прокидки в урл игр: http://localhost:3000/game?teamName=zxc
+
       socket.on('game:start', ({ isStarted, game }: ToggleGameHandler) => {
         game && setGame({ ...game });
         setPersistedGame({ ...game });
@@ -55,16 +57,23 @@ export const GameScreen = () => {
         if (!isStarted) {
           setIsStarted(isStarted);
           setPersistStarted(false);
-          setPersistedGame({} as Game);
+          setPersistedGame(null);
           setGame({} as Game);
           setIsVerifiedToFalse();
           localStorage.removeItem('clientId');
+          reconnect();
           navigate('/');
         }
       });
 
+      socket.on('game:newBoard', ({ board }) => {
+        console.log(board);
+      });
+
       return () => {
         socket.off('game:start');
+        socket.off('game:end');
+        socket.off('game:newBoard');
       };
     }
   }, [socket]);

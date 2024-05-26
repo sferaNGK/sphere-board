@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 interface GameStore {
   game: Game | null;
   isStarted: boolean;
-  setPersistedGame: (game: Game) => void;
+  setPersistedGame: (game: Game | null) => void;
   getPersistedGame: () => Game | null;
   setIsStarted: (isStarted: boolean) => void;
 }
@@ -15,7 +15,7 @@ export const useGame = create<GameStore>()(
     (set, get) => ({
       game: null,
       isStarted: false,
-      setPersistedGame: (game: Game) => set({ game }),
+      setPersistedGame: (game: Game | null) => set({ game }),
       getPersistedGame: () => get().game,
       setIsStarted: (isStarted: boolean) => set({ isStarted }),
     }),

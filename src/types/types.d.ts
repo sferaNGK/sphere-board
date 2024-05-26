@@ -11,6 +11,8 @@ export interface ToggleGameHandler {
 }
 
 export interface VerifyCodeHandler {
-  success: boolean;
+  success?: boolean;
+  game?: Game;
   error?: string;
+  isSessionStarted?: boolean;
 }
