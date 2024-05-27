@@ -9,7 +9,7 @@ import {
 } from '@/components';
 import { useEffect, useState } from 'react';
 import { useCode, useGame, useSocket } from '@/stores';
-import { Game, ToggleGameHandler } from '@/types';
+import { Game, MessageEventData, ToggleGameHandler } from '@/types';
 import { constructGameUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,13 +20,19 @@ export const GameScreen = () => {
     state.reconnect,
   ]);
   const [isStarted, setIsStarted] = useState(false);
-  const [persistedGame, setPersistedGame, isPersistStarted, setPersistStarted] =
-    useGame((state) => [
-      state.game,
-      state.setPersistedGame,
-      state.isStarted,
-      state.setIsStarted,
-    ]);
+  const [
+    persistedGame,
+    setPersistedGame,
+    isPersistStarted,
+    setPersistStarted,
+    teamName,
+  ] = useGame((state) => [
+    state.game,
+    state.setPersistedGame,
+    state.isStarted,
+    state.setIsStarted,
+    state.teamName,
+  ]);
   const setIsVerifiedToFalse = useCode((state) => state.setIsVerifiedToFalse);
   const [game, setGame] = useState({} as Game);
   const navigate = useNavigate();
@@ -37,12 +43,20 @@ export const GameScreen = () => {
     }
   };
 
+  window.addEventListener(
+    'message',
+    function (ev: MessageEvent<MessageEventData>) {
+      console.log(ev);
+      const { points } = ev.data;
+      // console.log(points, ev);
+      socket?.emit('game:end', { game: persistedGame, points });
+    },
+  );
+
   useEffect(() => {
     if (socket) {
       const clientId = getClientId();
       socket.emit('game:join', { clientId });
-
-      // TODO: получить teamName для прокидки в урл игр: http://localhost:3000/game?teamName=zxc
 
       socket.on('game:start', ({ isStarted, game }: ToggleGameHandler) => {
         game && setGame({ ...game });
@@ -66,6 +80,15 @@ export const GameScreen = () => {
         }
       });
 
+      socket.on(
+        'game:endGameSession',
+        ({ isCompleted }: { isCompleted: boolean }) => {
+          if (isCompleted) {
+            navigate('/end');
+          }
+        },
+      );
+
       socket.on('game:newBoard', ({ board }) => {
         console.log(board);
       });
@@ -81,7 +104,11 @@ export const GameScreen = () => {
   return (
     <div>
       {isStarted || isPersistStarted ? (
-        <IframeGame gameSrc={constructGameUrl(persistedGame, game)} />
+        <IframeGame
+          gameSrc={
+            constructGameUrl(persistedGame, game) + `?teamName=${teamName}`
+          }
+        />
       ) : (
         <Container>
           <Card>

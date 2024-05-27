@@ -18,10 +18,12 @@ export const CodeActivation = () => {
     state.reconnect,
   ]);
   const setIsVerified = useCode((state) => state.setIsVerified);
-  const [setPersistedIsStarted, setPersistedGame] = useGame((state) => [
-    state.setIsStarted,
-    state.setPersistedGame,
-  ]);
+  const [setPersistedIsStarted, setPersistedGame, setPersistedTeamName] =
+    useGame((state) => [
+      state.setIsStarted,
+      state.setPersistedGame,
+      state.setTeamName,
+    ]);
   const [error, setError] = React.useState<string | undefined>();
   const navigate = useNavigate();
 
@@ -30,14 +32,21 @@ export const CodeActivation = () => {
   React.useEffect(() => {
     socket?.on(
       'user:verifyCode',
-      ({ success, error, game, isSessionStarted }: VerifyCodeHandler) => {
+      ({
+        success,
+        error,
+        game,
+        isSessionStarted,
+        teamName,
+      }: VerifyCodeHandler) => {
         if (!success) {
           error && setError(error);
           return;
         }
 
-        if (game) {
+        if (game && teamName) {
           setPersistedGame(game);
+          setPersistedTeamName(teamName);
         }
 
         if (isSessionStarted) {

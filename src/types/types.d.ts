@@ -15,4 +15,10 @@ export interface VerifyCodeHandler {
   game?: Game;
   error?: string;
   isSessionStarted?: boolean;
+  teamName: string;
+}
+
+export interface MessageEventData {
+  teamName: string;
+  points: number;
 }
