@@ -46,9 +46,7 @@ export const GameScreen = () => {
   window.addEventListener(
     'message',
     function (ev: MessageEvent<MessageEventData>) {
-      console.log(ev);
       const { points } = ev.data;
-      // console.log(points, ev);
       socket?.emit('game:end', { game: persistedGame, points });
     },
   );
@@ -89,14 +87,9 @@ export const GameScreen = () => {
         },
       );
 
-      socket.on('game:newBoard', ({ board }) => {
-        console.log(board);
-      });
-
       return () => {
         socket.off('game:start');
         socket.off('game:end');
-        socket.off('game:newBoard');
       };
     }
   }, [socket]);

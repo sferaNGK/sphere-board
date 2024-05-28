@@ -7,7 +7,7 @@ import {
   Typography,
 } from '@/components';
 import { useCode, useGame, useSocket } from '@/stores';
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VerifyCodeHandler } from '@/types';
 
@@ -25,6 +25,7 @@ export const CodeActivation = () => {
       state.setTeamName,
     ]);
   const [error, setError] = React.useState<string | undefined>();
+  const [isWaitingForEnd, setIsWaitingForEnd] = useState(false);
   const navigate = useNavigate();
 
   // TODO: можно зарефакторить??
@@ -61,29 +62,47 @@ export const CodeActivation = () => {
       },
     );
 
+    socket?.on('game:waiting', ({ isWaiting }: { isWaiting: boolean }) => {
+      if (isWaiting) {
+        setIsWaitingForEnd(isWaiting);
+      }
+    });
+
     return () => {
       socket?.off('user:verifyCode');
+      socket?.off('user:waiting');
     };
   }, [socket]);
 
   return (
-    <div className="container max-w-7xl flex justify-center items-center flex-col">
-      <Card>
-        <CardHeader>
-          <Typography
-            variant="title"
-            tag="h1"
-            className="text-4xl font-bold mb-5 max-lg:text-center">
-            Введите код активации
-          </Typography>
-          <CardDescription className="max-lg:text-center">
-            Введите код с вашего мобильного телефона
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center">
-          <CodeForm error={error} setError={setError} />
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      {!isWaitingForEnd ? (
+        <div className="container max-w-7xl flex justify-center items-center flex-col">
+          <Card>
+            <CardHeader>
+              <Typography
+                variant="title"
+                tag="h1"
+                className="text-4xl font-bold mb-5 max-lg:text-center">
+                Введите код активации
+              </Typography>
+              <CardDescription className="max-lg:text-center">
+                Введите код с вашего мобильного телефона
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <CodeForm error={error} setError={setError} />
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <Typography
+          variant="title"
+          tag="h1"
+          className="text-7xl font-bold mb-5 text-center">
+          Ожидаем других игроков.
+        </Typography>
+      )}
+    </>
   );
 };
