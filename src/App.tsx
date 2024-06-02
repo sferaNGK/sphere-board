@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
-import { CodeActivation, GameScreen as Game } from '@/pages';
+import { CodeActivation, EndGame, GameScreen as Game } from '@/pages';
 import { ProtectedRoute } from '@/components';
 import { useCode, useSocket } from '@/stores';
 import { useEffect } from 'react';
@@ -42,6 +42,7 @@ export const App = () => {
           </ProtectedRoute>
         }
       />
+      <Route path={'/end'} element={<EndGame />} />
     </Routes>
   );
 };

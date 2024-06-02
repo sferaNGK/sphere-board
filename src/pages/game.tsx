@@ -9,7 +9,7 @@ import {
 } from '@/components';
 import { useEffect, useState } from 'react';
 import { useCode, useGame, useSocket } from '@/stores';
-import { Game, MessageEventData, ToggleGameHandler } from '@/types';
+import { Game, MessageEventData, ToggleGameHandler, User } from '@/types';
 import { constructGameUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,26 +20,20 @@ export const GameScreen = () => {
     state.reconnect,
   ]);
   const [isStarted, setIsStarted] = useState(false);
-  const [
-    persistedGame,
-    setPersistedGame,
-    isPersistStarted,
-    setPersistStarted,
-    teamName,
-  ] = useGame((state) => [
-    state.game,
-    state.setPersistedGame,
-    state.isStarted,
-    state.setIsStarted,
-    state.teamName,
-  ]);
+  const [persistedGame, setPersistedGame, isPersistStarted, setPersistStarted] =
+    useGame((state) => [
+      state.game,
+      state.setPersistedGame,
+      state.isStarted,
+      state.setIsStarted,
+    ]);
   const setIsVerifiedToFalse = useCode((state) => state.setIsVerifiedToFalse);
   const [game, setGame] = useState({} as Game);
   const navigate = useNavigate();
 
   const endGame = () => {
     if (socket) {
-      socket.emit('game:end', { game: persistedGame });
+      socket.emit('game:end', { game: persistedGame, points: 1000 });
     }
   };
 
@@ -80,9 +74,12 @@ export const GameScreen = () => {
 
       socket.on(
         'game:endGameSession',
-        ({ isCompleted }: { isCompleted: boolean }) => {
+        ({ isCompleted, users }: { isCompleted: boolean; users: User[] }) => {
           if (isCompleted) {
-            navigate('/end');
+            setIsStarted(!isCompleted);
+            localStorage.clear();
+            reconnect();
+            navigate('/end', { state: { users } });
           }
         },
       );
@@ -90,6 +87,7 @@ export const GameScreen = () => {
       return () => {
         socket.off('game:start');
         socket.off('game:end');
+        socket.off('game:endGameSession');
       };
     }
   }, [socket]);
@@ -97,11 +95,7 @@ export const GameScreen = () => {
   return (
     <div>
       {isStarted || isPersistStarted ? (
-        <IframeGame
-          gameSrc={
-            constructGameUrl(persistedGame, game) + `?teamName=${teamName}`
-          }
-        />
+        <IframeGame gameSrc={constructGameUrl(persistedGame, game)} />
       ) : (
         <Container>
           <Card>

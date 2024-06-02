@@ -7,9 +7,9 @@ import {
   Typography,
 } from '@/components';
 import { useCode, useGame, useSocket } from '@/stores';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { VerifyCodeHandler } from '@/types';
+import { User, VerifyCodeHandler } from '@/types';
 
 export const CodeActivation = () => {
   const [socket, setClientId, reconnect] = useSocket((state) => [
@@ -18,59 +18,65 @@ export const CodeActivation = () => {
     state.reconnect,
   ]);
   const setIsVerified = useCode((state) => state.setIsVerified);
-  const [setPersistedIsStarted, setPersistedGame, setPersistedTeamName] =
-    useGame((state) => [
-      state.setIsStarted,
-      state.setPersistedGame,
-      state.setTeamName,
-    ]);
-  const [error, setError] = React.useState<string | undefined>();
+  const [setPersistedIsStarted, setPersistedGame] = useGame((state) => [
+    state.setIsStarted,
+    state.setPersistedGame,
+  ]);
+  const [error, setError] = useState<string | undefined>();
   const [isWaitingForEnd, setIsWaitingForEnd] = useState(false);
   const navigate = useNavigate();
 
   // TODO: можно зарефакторить??
 
-  React.useEffect(() => {
-    socket?.on(
-      'user:verifyCode',
-      ({
-        success,
-        error,
-        game,
-        isSessionStarted,
-        teamName,
-      }: VerifyCodeHandler) => {
-        if (!success) {
-          error && setError(error);
-          return;
+  useEffect(() => {
+    if (socket) {
+      socket.on(
+        'user:verifyCode',
+        ({ success, error, game, isSessionStarted }: VerifyCodeHandler) => {
+          if (!success) {
+            error && setError(error);
+            return;
+          }
+
+          if (game) {
+            setPersistedGame(game);
+          }
+
+          if (isSessionStarted) {
+            setPersistedIsStarted(isSessionStarted);
+          }
+
+          navigate('/game');
+          setClientId();
+          setIsVerified();
+
+          reconnect();
+        },
+      );
+
+      socket.on('game:waiting', ({ isWaiting }: { isWaiting: boolean }) => {
+        if (isWaiting) {
+          setIsWaitingForEnd(isWaiting);
         }
+      });
 
-        if (game && teamName) {
-          setPersistedGame(game);
-          setPersistedTeamName(teamName);
-        }
-
-        if (isSessionStarted) {
-          setPersistedIsStarted(isSessionStarted);
-        }
-
-        navigate('/game');
-        setClientId();
-        setIsVerified();
-
-        reconnect();
-      },
-    );
-
-    socket?.on('game:waiting', ({ isWaiting }: { isWaiting: boolean }) => {
-      if (isWaiting) {
-        setIsWaitingForEnd(isWaiting);
-      }
-    });
+      socket.on(
+        'game:endGameSession',
+        ({ isCompleted, users }: { isCompleted: boolean; users: User[] }) => {
+          if (isCompleted) {
+            localStorage.clear();
+            reconnect();
+            navigate('/end', { state: { users } });
+          }
+        },
+      );
+    }
 
     return () => {
       socket?.off('user:verifyCode');
       socket?.off('user:waiting');
+      socket?.off('game:waiting');
+      socket?.off('game:endGameSession');
     };
   }, [socket]);
 
