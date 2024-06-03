@@ -23,7 +23,6 @@ export const CodeActivation = () => {
     state.setPersistedGame,
   ]);
   const [error, setError] = useState<string | undefined>();
-  const [isWaitingForEnd, setIsWaitingForEnd] = useState(false);
   const navigate = useNavigate();
 
   // TODO: можно зарефакторить??
@@ -54,12 +53,6 @@ export const CodeActivation = () => {
         },
       );
 
-      socket.on('game:waiting', ({ isWaiting }: { isWaiting: boolean }) => {
-        if (isWaiting) {
-          setIsWaitingForEnd(isWaiting);
-        }
-      });
-
       socket.on(
         'game:endGameSession',
         ({ isCompleted, users }: { isCompleted: boolean; users: User[] }) => {
@@ -75,40 +68,28 @@ export const CodeActivation = () => {
     return () => {
       socket?.off('user:verifyCode');
       socket?.off('user:waiting');
-      socket?.off('game:waiting');
       socket?.off('game:endGameSession');
     };
   }, [socket]);
 
   return (
-    <>
-      {!isWaitingForEnd ? (
-        <div className="container max-w-7xl flex justify-center items-center flex-col">
-          <Card>
-            <CardHeader>
-              <Typography
-                variant="title"
-                tag="h1"
-                className="text-4xl font-bold mb-5 max-lg:text-center">
-                Введите код активации
-              </Typography>
-              <CardDescription className="max-lg:text-center">
-                Введите код с вашего мобильного телефона
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <CodeForm error={error} setError={setError} />
-            </CardContent>
-          </Card>
-        </div>
-      ) : (
-        <Typography
-          variant="title"
-          tag="h1"
-          className="text-7xl font-bold mb-5 text-center">
-          Ожидаем других игроков.
-        </Typography>
-      )}
-    </>
+    <div className="container max-w-7xl flex justify-center items-center flex-col">
+      <Card>
+        <CardHeader>
+          <Typography
+            variant="title"
+            tag="h1"
+            className="text-4xl font-bold mb-5 max-lg:text-center">
+            Введите код активации
+          </Typography>
+          <CardDescription className="max-lg:text-center">
+            Введите код с вашего мобильного телефона
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <CodeForm error={error} setError={setError} />
+        </CardContent>
+      </Card>
+    </div>
   );
 };

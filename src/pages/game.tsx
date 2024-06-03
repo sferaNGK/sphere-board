@@ -29,6 +29,7 @@ export const GameScreen = () => {
     ]);
   const setIsVerifiedToFalse = useCode((state) => state.setIsVerifiedToFalse);
   const [game, setGame] = useState({} as Game);
+  const [isVR, setIsVR] = useState(false);
   const navigate = useNavigate();
 
   const endGame = () => {
@@ -51,6 +52,9 @@ export const GameScreen = () => {
       socket.emit('game:join', { clientId });
 
       socket.on('game:start', ({ isStarted, game }: ToggleGameHandler) => {
+        if (game.url === 'VR') {
+          setIsVR(true);
+        }
         game && setGame({ ...game });
         setPersistedGame({ ...game });
         if (isStarted) {
@@ -95,7 +99,13 @@ export const GameScreen = () => {
   return (
     <div>
       {isStarted || isPersistStarted ? (
-        <IframeGame gameSrc={constructGameUrl(persistedGame, game)} />
+        isVR ? (
+          <IframeGame gameSrc={constructGameUrl(persistedGame, game)} />
+        ) : (
+          <div>
+            <span>Попросите включить Вам {game.title}</span>
+          </div>
+        )
       ) : (
         <Container>
           <Card>
