@@ -81,6 +81,15 @@ export const GameScreen = () => {
       });
 
       socket.on(
+        'game:VR',
+        ({ game, clientIdBoard }: { game: Game; clientIdBoard?: string }) => {
+          if (getClientId() === clientIdBoard && game.url === 'VR') {
+            setIsVR(true);
+          }
+        },
+      );
+
+      socket.on(
         'game:end',
         ({ isStarted, clientIdBoard }: ToggleGameHandler) => {
           if (clientIdBoard === clientId && !isStarted) {
@@ -88,11 +97,6 @@ export const GameScreen = () => {
             reconnect();
             navigate('/');
             return;
-          }
-          if (!isStarted) {
-            clearLocalStorage();
-            reconnect();
-            navigate('/');
           }
         },
       );
@@ -138,7 +142,6 @@ export const GameScreen = () => {
                 tag="h1"
                 className="text-4xl font-bold mb-5 max-lg:text-center">
                 Ожидайте начала игры...
-                {isVR}
               </Typography>
               <CardDescription>
                 Подождите, пока администратор запустит игру.
