@@ -41,6 +41,7 @@ export const GameScreen = () => {
     'message',
     function (ev: MessageEvent<MessageEventData>) {
       const { points } = ev.data;
+      console.log(persistedGame);
       socket?.emit('game:end', { game: persistedGame, points });
     },
   );
@@ -63,7 +64,6 @@ export const GameScreen = () => {
         if (!isStarted) {
           setIsStarted(isStarted);
           setPersistStarted(false);
-          setPersistedGame(null);
           setGame({} as Game);
           setIsVerifiedToFalse();
           localStorage.removeItem('clientId');
@@ -85,6 +85,7 @@ export const GameScreen = () => {
       );
 
       return () => {
+        socket.off('game:join');
         socket.off('game:start');
         socket.off('game:end');
         socket.off('game:endGameSession');
@@ -113,14 +114,14 @@ export const GameScreen = () => {
           </Card>
         </Container>
       )}
-      {isStarted || isPersistStarted ? (
-        <Button
-          variant="default"
-          className="fixed bottom-4 right-4"
-          onClick={endGame}>
-          Закончить игру
-        </Button>
-      ) : null}
+      {/*{isStarted || isPersistStarted ? (*/}
+      {/*  <Button*/}
+      {/*    variant="default"*/}
+      {/*    className="fixed bottom-4 right-4"*/}
+      {/*    onClick={endGame}>*/}
+      {/*    Закончить игру*/}
+      {/*  </Button>*/}
+      {/*) : null}*/}
     </div>
   );
 };
