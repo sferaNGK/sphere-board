@@ -20,16 +20,23 @@ export const GameScreen = () => {
     state.reconnect,
   ]);
   const [isStarted, setIsStarted] = useState(false);
-  const [persistedGame, setPersistedGame, isPersistStarted, setPersistStarted] =
-    useGame((state) => [
-      state.game,
-      state.setPersistedGame,
-      state.isStarted,
-      state.setIsStarted,
-    ]);
+  const [
+    persistedGame,
+    setPersistedGame,
+    isPersistStarted,
+    setPersistStarted,
+    isVR,
+    setIsVR,
+  ] = useGame((state) => [
+    state.game,
+    state.setPersistedGame,
+    state.isStarted,
+    state.setIsStarted,
+    state.isVR,
+    state.setIsVR,
+  ]);
   const setIsVerifiedToFalse = useCode((state) => state.setIsVerifiedToFalse);
   const [game, setGame] = useState({} as Game);
-  const [isVR, setIsVR] = useState(false);
   const navigate = useNavigate();
 
   const endGame = () => {
@@ -45,6 +52,16 @@ export const GameScreen = () => {
       socket?.emit('game:end', { game: persistedGame, points });
     },
   );
+
+  const clearLocalStorage = () => {
+    setIsStarted(isStarted);
+    setPersistStarted(false);
+    setPersistedGame(null);
+    setGame({} as Game);
+    setIsVerifiedToFalse();
+    setIsVR(false);
+    localStorage.removeItem('clientId');
+  };
 
   useEffect(() => {
     if (socket) {
@@ -63,18 +80,22 @@ export const GameScreen = () => {
         }
       });
 
-      socket.on('game:end', ({ isStarted }: ToggleGameHandler) => {
-        if (!isStarted) {
-          setIsStarted(isStarted);
-          setPersistStarted(false);
-          setPersistedGame(null);
-          setGame({} as Game);
-          setIsVerifiedToFalse();
-          localStorage.removeItem('clientId');
-          reconnect();
-          navigate('/');
-        }
-      });
+      socket.on(
+        'game:end',
+        ({ isStarted, clientIdBoard }: ToggleGameHandler) => {
+          if (clientIdBoard === clientId && !isStarted) {
+            clearLocalStorage();
+            reconnect();
+            navigate('/');
+            return;
+          }
+          if (!isStarted) {
+            clearLocalStorage();
+            reconnect();
+            navigate('/');
+          }
+        },
+      );
 
       socket.on(
         'game:endGameSession',
@@ -97,13 +118,15 @@ export const GameScreen = () => {
   }, [socket]);
 
   return (
-    <div>
+    <>
       {isStarted || isPersistStarted ? (
-        isVR ? (
+        !isVR ? (
           <IframeGame gameSrc={constructGameUrl(persistedGame, game)} />
         ) : (
-          <div>
-            <span>Попросите включить Вам {game.title}</span>
+          <div className="w-full flex justify-center">
+            <span className="text-3xl font-bold">
+              Попросите включить Вам {game.title}
+            </span>
           </div>
         )
       ) : (
@@ -115,6 +138,7 @@ export const GameScreen = () => {
                 tag="h1"
                 className="text-4xl font-bold mb-5 max-lg:text-center">
                 Ожидайте начала игры...
+                {isVR}
               </Typography>
               <CardDescription>
                 Подождите, пока администратор запустит игру.
@@ -131,6 +155,6 @@ export const GameScreen = () => {
           Закончить игру
         </Button>
       ) : null}
-    </div>
+    </>
   );
 };

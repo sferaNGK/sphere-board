@@ -7,6 +7,7 @@ export interface Game {
 
 export interface ToggleGameHandler {
   isStarted: boolean;
+  clientIdBoard: string;
   game: Game;
 }
 
