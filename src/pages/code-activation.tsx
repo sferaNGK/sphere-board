@@ -23,7 +23,6 @@ export const CodeActivation = () => {
     state.setPersistedGame,
   ]);
   const [error, setError] = useState<string | undefined>();
-  const [isWaitingForEnd, setIsWaitingForEnd] = useState(false);
   const navigate = useNavigate();
 
   // TODO: можно зарефакторить??
@@ -54,12 +53,6 @@ export const CodeActivation = () => {
         },
       );
 
-      socket.on('game:waiting', ({ isWaiting }: { isWaiting: boolean }) => {
-        if (isWaiting) {
-          setIsWaitingForEnd(isWaiting);
-        }
-      });
-
       socket.on(
         'game:endGameSession',
         ({ isCompleted, users }: { isCompleted: boolean; users: User[] }) => {
@@ -74,7 +67,6 @@ export const CodeActivation = () => {
 
     return () => {
       socket?.off('user:verifyCode');
-      socket?.off('user:waiting');
       socket?.off('game:waiting');
       socket?.off('game:endGameSession');
     };

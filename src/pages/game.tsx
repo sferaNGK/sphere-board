@@ -1,5 +1,5 @@
 import {
-  Button,
+  // Button,
   Card,
   CardDescription,
   CardHeader,
@@ -12,6 +12,7 @@ import { useCode, useGame, useSocket } from '@/stores';
 import { Game, MessageEventData, ToggleGameHandler, User } from '@/types';
 import { constructGameUrl } from '@/utils';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components';
 
 export const GameScreen = () => {
   const [socket, getClientId, reconnect] = useSocket((state) => [
@@ -29,13 +30,14 @@ export const GameScreen = () => {
     ]);
   const setIsVerifiedToFalse = useCode((state) => state.setIsVerifiedToFalse);
   const [game, setGame] = useState({} as Game);
+  const { toast } = useToast();
   const navigate = useNavigate();
 
-  const endGame = () => {
-    if (socket) {
-      socket.emit('game:end', { game: persistedGame, points: 1000 });
-    }
-  };
+  // const endGame = () => {
+  //   if (socket) {
+  //     socket.emit('game:end', { game: persistedGame, points: 1000 });
+  //   }
+  // };
 
   window.addEventListener(
     'message',
@@ -43,6 +45,10 @@ export const GameScreen = () => {
       const { points } = ev.data;
       if (game && points) {
         socket?.emit('game:end', { game: persistedGame, points });
+        toast({
+          title: 'Игра окончена.',
+          description: `Вы удачно справились с заданием и заработали очков: ${points}`,
+        });
       }
     },
   );
@@ -115,14 +121,14 @@ export const GameScreen = () => {
           </Card>
         </Container>
       )}
-      {isStarted || isPersistStarted ? (
-        <Button
-          variant="default"
-          className="fixed bottom-4 right-4"
-          onClick={endGame}>
-          Закончить игру
-        </Button>
-      ) : null}
+      {/*{isStarted || isPersistStarted ? (*/}
+      {/*  <Button*/}
+      {/*    variant="default"*/}
+      {/*    className="fixed bottom-4 right-4"*/}
+      {/*    onClick={endGame}>*/}
+      {/*    Закончить игру*/}
+      {/*  </Button>*/}
+      {/*) : null}*/}
     </div>
   );
 };
